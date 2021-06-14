@@ -1,73 +1,105 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-       "rgName": {
-           "type": "string",
-           "metadata": {
-                "description": "The name of the Resource Group"
-            }
-        },
-       "location": {
-        "type": "string",
-        "metadata": {
-          "description": "Location for all resources. Run 'az account list-locations' to see the list of available locations."
-        }
-      }
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "rgName": {
+      "type": "string"
     },
-    "variables": {
+    "rgLocation": {
+      "type": "string"
+    },
+    "storagePrefix": {
+      "type": "string",
+      "maxLength": 11
+    }
+  },
+  "variables": {
+    "storageName": "[concat(parameters('storagePrefix'), uniqueString(subscription().id, parameters('rgName')))]",
       "existingVirtualNetworkName": "vnet",
       "existingSubnetName": "subnet-1"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2020-10-01",
+      "name": "[parameters('rgName')]",
+      "location": "[parameters('rgLocation')]",
+      "properties": {}
     },
-    "resources": [
-        {
-            "type": "Microsoft.Resources/resourceGroups",
-            "apiVersion": "2018-05-01",
-            "location": "[parameters('location')]",
-            "name": "[parameters('rgName')]",
-            "properties": {}
-        },
-      {
-        "type": "Microsoft.Network/virtualNetworks",
-        "name": "[variables('existingVirtualNetworkName')]",
-        "apiVersion": "2016-03-30",
-        "location": "[parameters('location')]",
-        "comments": "Virtual network for overall solution",
-        "tags": {
-          "displayName": "Virtual Network"
-        },
-        "dependsOn": [
-            "[concat('Microsoft.Network/resourceGroups/', parameters('rgName'))]"
-        ],
-        "properties": {
-          "addressSpace": {
-            "addressPrefixes": [
-              "10.0.0.0/16"
-            ]
-          },
-          "subnets": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "prereqsDeployment",
+      "resourceGroup": "[parameters('rgName')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/resourceGroups/', parameters('rgName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "variables": {},
+          "resources": [
             {
-              "name": "[variables('existingSubnetName')]",
-              "properties": {
-                "addressPrefix": "10.0.1.0/24"
-              }
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2019-06-01",
+              "name": "[variables('storageName')]",
+              "location": "[parameters('rgLocation')]",
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "kind": "StorageV2"
+            },
+            {
+                "type": "Microsoft.Network/virtualNetworks",
+                "name": "[variables('existingVirtualNetworkName')]",
+                "apiVersion": "2016-03-30",
+                "location": "[parameters('rgLocation')]",
+                "comments": "Virtual network for overall solution",
+                "tags": {
+                "displayName": "Virtual Network"
+                },
+                "dependsOn": [
+                    "[concat('Microsoft.Network/resourceGroups/', parameters('rgName'))]"
+                ],
+                "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                    "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                    "name": "[variables('existingSubnetName')]",
+                    "properties": {
+                        "addressPrefix": "10.0.1.0/24"
+                    }
             }
           ]
         }
       }
-    ],
-    "outputs": {
-      "virtualNetwork": {
-        "type": "string",
-        "value": "[variables('existingVirtualNetworkName')]"
-      },
-      "subnet": {
-        "type": "string",
-        "value": "[variables('existingSubnetName')]"
-      },
-      "rgName": {
-        "type": "string",
-        "value": "[resourceGroup().name]"
+
+          ],
+          "outputs": {
+            "virtualNetwork": {
+                "type": "string",
+                "value": "[variables('existingVirtualNetworkName')]"
+            },
+            "subnet": {
+                "type": "string",
+                "value": "[variables('existingSubnetName')]"
+            },
+            "rgName": {
+                "type": "string",
+                "value": "[resourceGroup().name]"
+            }
+          }
+        }
       }
     }
-  }
+  ],
+  "outputs": {}
+}
+
