@@ -3,17 +3,15 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
        "rgName": {
-            "type": "string"
-        },
-        "tags": {
-            "type": "object",
-            "defaultValue": {}
+           "type": "string",
+           "metadata": {
+                "description": "The name of the Resource Group"
+            }
         },
        "location": {
         "type": "string",
-        "defaultValue": "[resourceGroup().location]",
         "metadata": {
-          "description": "Location for all resources."
+          "description": "Location for all resources. Run 'az account list-locations' to see the list of available locations."
         }
       }
     },
@@ -27,8 +25,7 @@
             "apiVersion": "2018-05-01",
             "location": "[parameters('location')]",
             "name": "[parameters('rgName')]",
-            "properties": {},
-            "tags": "[parameters('tags')]"
+            "properties": {}
         },
       {
         "type": "Microsoft.Network/virtualNetworks",
