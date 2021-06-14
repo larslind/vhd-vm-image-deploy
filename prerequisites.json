@@ -15,8 +15,8 @@
   },
   "variables": {
     "storageName": "[concat(parameters('namePrefix'), uniqueString(subscription().id, parameters('rgName')))]",
-    "vnetName": "[concat(parameters('namePrefix'), uniqueString(subscription().id, parameters('rgName')))]",
-    "subnetName": "[concat(parameters('namePrefix'), uniqueString(subscription().id, parameters('rgName')))]"
+    "vnetName": "[concat(parameters('namePrefix'), '-vnet')]",
+    "subnetName": "[concat(parameters('namePrefix'), '-subnet')]"
   },
   "resources": [
     {
