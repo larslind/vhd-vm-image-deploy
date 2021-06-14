@@ -36,7 +36,9 @@
         "tags": {
           "displayName": "Virtual Network"
         },
-        "dependsOn": [],
+        "dependsOn": [
+            "[concat('Microsoft.Network/resourceGroups/', parameters('rgName'))]"
+        ],
         "properties": {
           "addressSpace": {
             "addressPrefixes": [
