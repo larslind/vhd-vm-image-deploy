@@ -8,15 +8,15 @@
     "rgLocation": {
       "type": "string"
     },
-    "storagePrefix": {
+    "namePrefix": {
       "type": "string",
       "maxLength": 11
     }
   },
   "variables": {
-    "storageName": "[concat(parameters('storagePrefix'), uniqueString(subscription().id, parameters('rgName')))]",
-      "existingVirtualNetworkName": "vnet",
-      "existingSubnetName": "subnet-1"
+    "storageName": "[concat(parameters('namePrefix'), uniqueString(subscription().id, parameters('rgName')))]",
+    "vnetName": "[concat(parameters('namePrefix'), uniqueString(subscription().id, parameters('rgName')))]",
+    "subnetName": "[concat(parameters('namePrefix'), uniqueString(subscription().id, parameters('rgName')))]"
   },
   "resources": [
     {
@@ -54,16 +54,13 @@
             },
             {
                 "type": "Microsoft.Network/virtualNetworks",
-                "name": "[variables('existingVirtualNetworkName')]",
+                "name": "[variables('vnetName')]",
                 "apiVersion": "2016-03-30",
                 "location": "[parameters('rgLocation')]",
                 "comments": "Virtual network for overall solution",
                 "tags": {
                 "displayName": "Virtual Network"
                 },
-                "dependsOn": [
-                    "[concat('Microsoft.Network/resourceGroups/', parameters('rgName'))]"
-                ],
                 "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -72,7 +69,7 @@
                 },
                 "subnets": [
                     {
-                    "name": "[variables('existingSubnetName')]",
+                    "name": "[variables('subnetName')]",
                     "properties": {
                         "addressPrefix": "10.0.1.0/24"
                     }
@@ -85,11 +82,11 @@
           "outputs": {
             "virtualNetwork": {
                 "type": "string",
-                "value": "[variables('existingVirtualNetworkName')]"
+                "value": "[variables('vnetName')]"
             },
             "subnet": {
                 "type": "string",
-                "value": "[variables('existingSubnetName')]"
+                "value": "[variables('subnetName')]"
             },
             "rgName": {
                 "type": "string",
