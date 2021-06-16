@@ -3,18 +3,31 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "rgName": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Resource Group"
+      },
+      "defaultValue": "RTC-Demo"
     },
     "rgLocation": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "The Azure Region to deploy the resources to. Please use 'az account list-locations --output table' to find available locations."
+      },
+      "defaultValue": "centralus"
     },
     "namePrefix": {
       "type": "string",
-      "maxLength": 11
+      "maxLength": 11,
+      "metadata": {
+        "description": "A prefix, max 11 characters, lower case letters and numbers only."
+      },
+      "defaultValue": "rtcdemo"
     }
   },
   "variables": {
-    "storageName": "[concat(parameters('namePrefix'), uniqueString(subscription().id, parameters('rgName')))]",
+    "rgDeploymentName": "[concat(parameters('rgName'), 'Deployment', uniqueString(subscription().id))]",
+    "storageAccountName": "[concat(parameters('namePrefix'), uniqueString(subscription().id, parameters('rgName')))]",
     "vnetName": "[concat(parameters('namePrefix'), '-vnet')]",
     "subnetName": "[concat(parameters('namePrefix'), '-subnet')]"
   },
@@ -29,7 +42,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-10-01",
-      "name": "prereqsDeployment",
+      "name": "[variables('rgDeploymentName')]",
       "resourceGroup": "[parameters('rgName')]",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/resourceGroups/', parameters('rgName'))]"
@@ -45,12 +58,31 @@
             {
               "type": "Microsoft.Storage/storageAccounts",
               "apiVersion": "2019-06-01",
-              "name": "[variables('storageName')]",
+              "name": "[variables('storageAccountName')]",
               "location": "[parameters('rgLocation')]",
               "sku": {
                 "name": "Standard_LRS"
               },
-              "kind": "StorageV2"
+              "kind": "StorageV2",
+              "resources": [
+                {
+                  "type": "blobServices/containers",
+                  "apiVersion": "2019-06-01",
+                  "name": "[concat('default/', 'vhds')]",
+                  "dependsOn": [
+                    "[variables('storageAccountName')]"
+                  ]
+                },
+                {
+                  "type": "blobServices/containers",
+                  "apiVersion": "2019-06-01",
+                  "name": "[concat('default/', 'scripts')]",
+                  "dependsOn": [
+                    "[variables('storageAccountName')]"
+                  ]
+                }
+              ]
+        
             },
             {
                 "type": "Microsoft.Network/virtualNetworks",
@@ -90,7 +122,7 @@
             },
             "rgName": {
                 "type": "string",
-                "value": "[resourceGroup().name]"
+                "value": "[parameters('rgName')]"
             }
           }
         }
