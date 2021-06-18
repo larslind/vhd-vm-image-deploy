@@ -16,6 +16,8 @@ echo -e "${reset}"
 
 echo "Please enter the SAS URL for the source VHD file"
 read sourceVHDSASURL
+echo "Please enter the name of the target Storage Account"
+read targetStorageAccountName
 echo "Please enter the name of the file to copy the VHD to"
 read targetVHDFileName
 

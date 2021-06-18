@@ -34,4 +34,4 @@ read fileToDownloadUrl
 
 rgDeploymentName=RTCRGDeployment-"$(date +%Y%m%d%H%M%S)"
 
-az deployment group create --resource-group $rgName --name $rgDeploymentName --template-file "./vm-from-vhd.json"  --parameters vmName=$vmName osDiskVhdUri=$osDiskVhdUri vmSize=$vmSize existingVirtualNetworkName=$existingVirtualNetworkName subnetName=$subnetName fileToDownloadUrl=$fileToDownloadUrl
+az deployment group create --resource-group $rgName --name $rgDeploymentName --template-file "./3-vm-from-vhd.json"  --parameters vmName=$vmName osDiskVhdUri=$osDiskVhdUri vmSize=$vmSize existingVirtualNetworkName=$existingVirtualNetworkName subnetName=$subnetName fileToDownloadUrl=$fileToDownloadUrl

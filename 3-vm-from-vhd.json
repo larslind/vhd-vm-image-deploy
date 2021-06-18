@@ -55,7 +55,7 @@
         "vhdURIArray": "[split(parameters('osDiskVhdUri'), createArray('/', '.'))]",
         "vhdStorageAccountName": "[variables('vhdURIArray')[2]]",
         "osType": "Linux",
-        "diagStorageAccountName": "[concat(parameters('vmName'), 'diag')]",
+        "diagStorageAccountName": "[concat(parameters('vmName'), uniqueString(subscription().id))]",
         "subnetRef": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'),  parameters('subnetName'))]",
         "nicName": "[concat(parameters('vmName'), '-nic1')]",
         "osDiskVhdName": "[concat('http://',variables('vhdStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmName'),'osDisk.vhd')]"

@@ -24,5 +24,5 @@ read namePrefix
 
 subDeploymentName=RTCSubDeployment-"$(date +%Y%m%d%H%M%S)"
 
-az deployment sub create --name $subDeploymentName --location $rgLocation --template-file "./prerequisites.json"  --parameters rgName=$rgName rgLocation=$rgLocation namePrefix=$namePrefix 
+az deployment sub create --name $subDeploymentName --location $rgLocation --template-file "./1-prerequisites.json"  --parameters rgName=$rgName rgLocation=$rgLocation namePrefix=$namePrefix 
 
