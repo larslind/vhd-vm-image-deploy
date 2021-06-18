@@ -1,0 +1,175 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the VM"
+            }
+        },
+        "osDiskVhdUri": {
+            "type": "string",
+            "metadata": {
+                "description": "Uri of the existing OS VHD in ARM standard or premium storage"
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide an admin username for the Virtual Machine."
+            }
+        },
+        "adminPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide a password for the Virtual Machine."
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "metadata": {
+                "description": "Size of the VM"
+            }
+        },
+        "existingVirtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the existing VNET"
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the subnet in the virtual network you want to use"
+            }
+        },
+        "fileToDownloadUrl": {
+            "type": "string",
+            "metadata": {
+                "description": "URL of the file to download to the VM"
+            }
+        }
+    },
+    "variables": {
+        "vhdURIArray": "[split(parameters('osDiskVhdUri'), createArray('/', '.'))]",
+        "vhdStorageAccountName": "[variables('vhdURIArray')[2]]",
+        "osType": "Linux",
+        "diagStorageAccountName": "[concat(parameters('vmName'), 'diag')]",
+        "subnetRef": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'),  parameters('subnetName'))]",
+        "nicName": "[concat(parameters('vmName'), '-nic1')]",
+        "osDiskVhdName": "[concat('http://',variables('vhdStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmName'),'osDisk.vhd')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2021-02-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('diagStorageAccountName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_GRS"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },
+        {
+            "apiVersion": "2020-07-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('nicName')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "NetworkInterface"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2015-06-15",
+            "name": "[parameters('vmName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computername": "[parameters('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "name": "[concat(parameters('vmName'),'-osDisk')]",
+                        "osType": "[variables('osType')]",
+                        "caching": "ReadWrite",
+                        "image": {
+                            "uri": "[parameters('osDiskVhdUri')]"
+                        },
+                        "vhd": {
+                            "uri": "[variables('osDiskVhdName')]"
+                        },
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
+                    }
+                }
+
+            }
+        },
+        {
+            "name": "[concat(parameters('vmName'), '/runscript')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2017-03-30",
+            "dependsOn": [
+              "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+            ],
+            "tags": {
+              "displayName": "runscript"
+            },
+            "properties": {
+              "publisher": "Microsoft.Azure.Extensions",
+              "type": "CustomScript",
+              "typeHandlerVersion": "2.0",
+              "autoUpgradeMinorVersion": true,
+              "settings": {
+                "fileUris": ["https://raw.githubusercontent.com/larslind/vhd-vm-image-publish/main/download-file.sh"]  
+                },
+              "protectedSettings": {
+                "commandToExecute": "[concat('sh download-file.sh \"', parameters('fileToDownloadUrl'), '\"')]"
+              }
+            }
+          }
+    ],
+    "outputs": {
+        "instanceView": {
+          "value": "[reference(resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('vmName'), 'runscript')).instanceView]",
+          "type": "object"
+        }
+      }
+}

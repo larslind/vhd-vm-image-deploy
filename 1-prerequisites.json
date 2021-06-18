@@ -13,8 +13,7 @@
       "type": "string",
       "metadata": {
         "description": "The Azure Region to deploy the resources to. Please use 'az account list-locations --output table' to find available locations."
-      },
-      "defaultValue": "centralus"
+      }
     },
     "namePrefix": {
       "type": "string",
